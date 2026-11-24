@@ -1,0 +1,29 @@
+[package]
+name = "noise-detect"
+description = "纯状态机：触发检测、自适应底噪、半双工门控。无 I/O、无 cpal。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+# 打开离线特征提取（`offline` 模块）与合成信号发生器，供
+# `examples/replay.rs` 和实机调参使用。发布构建不带这些代码。
+testgen = ["noise-dsp/testgen"]
+
+[dependencies]
+noise-core.workspace = true
+noise-dsp.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+serde_json.workspace = true
+# 场景测试要跑真实的 DSP 链（触发带滤波 + 八度带），不能只喂手搓的
+# 特征值——那样测的是检测器对**我以为的**信号的反应，不是对实际信号的。
+# `testgen` 打开合成信号发生器。
+noise-dsp = { workspace = true, features = ["testgen"] }
+# `examples/replay.rs` 读 WAV。检测器本身不碰文件——这条依赖只存在于
+# dev-dependencies，所以「检测器没有 I/O」仍然由编译期保证。
+hound.workspace = true

@@ -1,0 +1,55 @@
+[workspace]
+resolver = "2"
+members = [
+    "src-tauri",
+    "crates/noise-core",
+    "crates/noise-dsp",
+    "crates/noise-detect",
+    "crates/noise-store",
+    "crates/noise-audio",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.94"
+license = "MIT"
+authors = ["laoya"]
+description = "住宅楼上噪音实时监测与取证"
+
+[workspace.dependencies]
+# 内部 crate
+noise-core = { path = "crates/noise-core" }
+noise-dsp = { path = "crates/noise-dsp" }
+noise-detect = { path = "crates/noise-detect" }
+noise-store = { path = "crates/noise-store" }
+noise-audio = { path = "crates/noise-audio" }
+
+# 序列化 / 错误
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+# DSP / 音频
+biquad = "0.6.0"
+cpal = "0.18.2"
+rtrb = "0.4.0"
+hound = "3.5.1"
+
+# 并发 / 基础设施
+crossbeam-channel = "0.5"
+tracing = "0.1"
+sha2 = "0.10"
+proptest = "1"
+
+# 本仓库的调试配置：依赖用优化过的构建，自己的代码保持调试信息。
+# 没有这个，实时音频路径在 debug 构建下会因为未优化的 DSP 而掉帧。
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

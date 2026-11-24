@@ -1,0 +1,28 @@
+[package]
+name = "noise-audio"
+description = "音频引擎：cpal 流、实时线程、无锁环。本仓库中唯一允许链接 cpal 的 crate。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+# 把计数全局分配器挂上，实时回调内一旦发生分配就记账。
+#
+# 还必须**同时**是 debug 构建才真正生效（见 `rtguard.rs`）——所以
+# `--all-features` 放进发布包也不会让用户背上这个开销。
+rt-guard = []
+
+[dependencies]
+noise-core.workspace = true
+noise-dsp.workspace = true
+noise-detect.workspace = true
+noise-store.workspace = true
+cpal.workspace = true
+rtrb.workspace = true
+crossbeam-channel.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true

@@ -1,0 +1,17 @@
+[package]
+name = "noise-core"
+description = "领域词汇与配置类型。零音频依赖 —— 这个 crate 必须能被任何地方安全引用。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+# `event.rs` 的枚举序列化语义测试（`"impact"` 而不是 `"Impact"`）要
+# 真的过一遍 JSON——那正是落到 `events.jsonl` 里的形式，手写比较字符串
+# 等于把被测的东西假设成对的。
+serde_json.workspace = true

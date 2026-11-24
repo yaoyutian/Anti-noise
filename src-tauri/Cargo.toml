@@ -1,0 +1,45 @@
+[package]
+name = "anti-noise"
+description = "住宅楼上噪音实时监测与取证"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# 注意：这里**不要**出现 [workspace] 表。create-tauri-app 的某些版本会写入
+# 一个嵌套 workspace，那会静默吞掉根 crate 图，导致根目录的
+# `cargo test --workspace` 什么都不测。用 `cargo metadata --no-deps` 验证成员数。
+
+[lib]
+# `_lib` 后缀是必要的，用于让 lib 名与 bin 名不冲突（Windows 上尤其如此）。
+name = "anti_noise_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+noise-core.workspace = true
+noise-dsp.workspace = true
+noise-detect.workspace = true
+noise-store.workspace = true
+noise-audio.workspace = true
+
+# `protocol-asset` 是**必须**的：事件录音要在前端用 `convertFileSrc()` 播放，
+# 而 tauri.conf.json 里开了 `assetProtocol`。两者不匹配时 tauri 的 build
+# script 会直接报错终止构建——不是运行时才失效。
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-log = "2"
+tauri-plugin-single-instance = "2"
+
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+crossbeam-channel.workspace = true
+cpal.workspace = true
+
+# 注意：release profile 定义在**根** Cargo.toml 的 [profile.release]。
+# 非根成员的 profile 表会被 cargo 忽略并告警。

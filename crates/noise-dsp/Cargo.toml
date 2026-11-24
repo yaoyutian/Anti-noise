@@ -1,0 +1,20 @@
+[package]
+name = "noise-dsp"
+description = "纯 DSP：滤波器设计、计权、声级指标、八度带。无 I/O、无 cpal、无线程。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+# 对外开放合成信号发生器，供 noise-detect 的场景测试与 replay 工具使用。
+# 本 crate 自己的测试无条件可见（见 lib.rs 的 `cfg(any(test, feature = ...))`）。
+testgen = []
+
+[dependencies]
+noise-core.workspace = true
+biquad.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
