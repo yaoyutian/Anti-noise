@@ -1,0 +1,17 @@
+[package]
+name = "noise-node"
+description = "树莓派最小节点：麦克风 → 检测 → 录音 → 延迟 3 秒原样回放"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+noise-core.workspace = true
+noise-dsp.workspace = true
+noise-detect.workspace = true
+noise-audio.workspace = true
+
+serde_json.workspace = true
+crossbeam-channel.workspace = true
+hound.workspace = true

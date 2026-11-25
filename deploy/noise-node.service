@@ -1,0 +1,37 @@
+# Anti-Noise 最小节点 systemd 单元。
+#
+# 安装前先把 --input / --output 改成 `noise-node --list` 打印的设备 id
+# 或名字；设备名在插拔后可能变化，id 更稳。
+#
+#   sudo useradd --system --user-group --groups audio --home /var/lib/noise-node \
+#       --shell /usr/sbin/nologin antinoise
+#   sudo install -m 755 target/release/noise-node /usr/local/bin/noise-node
+#   sudo install -m 644 deploy/noise-node.service /etc/systemd/system/noise-node.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now noise-node
+#
+# 建议第一次先用有线/USB 音箱；蓝牙音箱的延迟和 ALSA 可见性见
+# docs/raspberry-pi-minimal.md。
+
+[Unit]
+Description=Anti-Noise minimal node
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=antinoise
+Group=antinoise
+SupplementaryGroups=audio
+StateDirectory=noise-node
+WorkingDirectory=/var/lib/noise-node
+ExecStart=/usr/local/bin/noise-node \
+    --input "USB PnP Sound Device" \
+    --output "USB PnP Sound Device" \
+    --delay-ms 3000 \
+    --frames-dir /var/lib/noise-node/events
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

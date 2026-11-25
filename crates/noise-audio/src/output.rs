@@ -517,6 +517,16 @@ pub struct OutputBuild {
     pub error_counters: Arc<ErrorCounters>,
 }
 
+impl OutputBuild {
+    /// 启动输出流。理由同 [`crate::input::InputBuild::play`]。
+    pub fn play(&mut self) -> Result<(), String> {
+        use cpal::traits::StreamTrait;
+        self.stream
+            .play()
+            .map_err(|e| format!("启动输出流失败：{e}"))
+    }
+}
+
 /// 按协商结果建输出流，并把单声道反击声复制到所有声道。
 ///
 /// **复制到所有声道而不是只写第一声道**：用户的大音响接在哪一路是不

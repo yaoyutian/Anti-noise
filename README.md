@@ -5,7 +5,7 @@
 用麦克风持续监听楼板撞击声（脚步、拖拽家具、掉落物），在事件发生时保留事件前后的录音和结构化记录；设计目标还包括半双工反击与失控保护。核心难点不在录音，而在**低频**：楼板撞击声的能量集中在 20–200 Hz，峰值在 63 Hz 八度带，而消费级麦克风、系统「音频增强」和通信模式都会优先削掉这一段。
 
 > **当前状态：算法核心已完成，桌面应用尚未接通。**
-> 今天可以直接使用的是 **Rust 测试套件**和 **`replay` 离线检测工具**；实时采集、录音落盘和监测界面仍在开发中。
+> 今天可以直接使用的是 **Rust 测试套件**、**`replay` 离线检测工具**，以及**树莓派无头最小节点 `noise-node`**（新增，尚未实机验证）；桌面监测界面仍在开发中。
 
 ## 当前状态
 
@@ -15,6 +15,7 @@
 | `crates/noise-dsp` | 已实现 | Butterworth 滤波器设计、A/C/Z 计权、八度带、声级指标、麦克风校准 |
 | `crates/noise-detect` | 已实现 | 自适应底噪、迟滞阈值、冲击状态机、半双工门控、离线特征提取与 `replay` 示例 |
 | `crates/noise-audio` | 部分实现 | 设备枚举与参数协商、输入/输出流、无锁环、pre-roll 历史、回放波形、状态快照已完成；`analysis.rs` 尚未挂进 `lib.rs`，`engine.rs` 尚未落地 |
+| `crates/noise-node` | 最小实现（未实机验证） | 无头节点：麦克风 → 检测 → 事件 WAV/JSONL → 延迟 3 秒原样回放；见 [docs/raspberry-pi-minimal.md](docs/raspberry-pi-minimal.md) |
 | `crates/noise-store` | 骨架 | 录音分段、事件索引、会话清单、保留策略、取证导出均未实现 |
 | `src-tauri` | 部分实现 | Tauri 2 外壳，只有一个 `get_status` 命令；日志/单实例插件已在依赖中声明但未注册 |
 | `src/`（前端） | 模板 | 仍是 `create-tauri-app` 模板；页面的 `greet` 命令在 Rust 侧不存在，按钮点击会报错 |
@@ -41,6 +42,15 @@ npm run tauri dev
 
 第 3 条命令里的 `--` 是 cargo 的参数分隔符，不能省略；路径有空格时用引号包起来。
 
+**树莓派无头节点**：先列出设备，再指定输入/输出：
+
+```bash
+cargo run -p noise-node --release -- --list
+cargo run -p noise-node --release -- --input <id> --output <id> --delay-ms 3000
+```
+
+硬件选型、Pi 上编译、systemd 和调参见 [docs/raspberry-pi-minimal.md](docs/raspberry-pi-minimal.md)。
+
 ## 常用命令
 
 | 目的 | 命令 |
@@ -53,6 +63,8 @@ npm run tauri dev
 | 不依赖 Tauri 的算法测试 | `cargo test -p noise-core -p noise-dsp -p noise-detect -p noise-audio` |
 | 离线检测一段录音 | `cargo run -p noise-detect --example replay -- <wav>` |
 | 查看 replay 全部参数 | `cargo run -p noise-detect --example replay -- --help` |
+| 列出树莓派节点可用设备 | `cargo run -p noise-node --release -- --list` |
+| 启动树莓派最小节点 | `cargo run -p noise-node --release -- --input <id> --output <id> --delay-ms 3000` |
 | 开发环境自检 | `npx tauri info` |
 
 ## 使用说明
@@ -66,6 +78,8 @@ cargo run -p noise-detect --example replay -- 现场录音.wav --speed 1
 ```
 
 参数含义、输出解读、录音准备和调参流程见 [docs/usage.md](docs/usage.md)。每个旋钮为什么存在、默认值被哪些实测推翻，见 [docs/detector-tuning.md](docs/detector-tuning.md)。
+
+**树莓派最小节点**：`noise-node` 是一个无头程序，把麦克风、检测器、事件录音和喇叭串起来；检测到事件后延迟 3 秒把录到的声音原样放回去。它没有 UI、没有保留策略、也不处理设备热插拔，适合先把硬件链路和参数跑通，见 [docs/raspberry-pi-minimal.md](docs/raspberry-pi-minimal.md)。
 
 **桌面应用**：`npm run tauri dev` 会打开标题为「Anti-Noise — 楼上噪音监测」的窗口，但界面仍是 Tauri 模板，且没有接入音频引擎。当前唯一可用的 IPC 命令是 `get_status`，它固定返回 `stopped`。
 
@@ -94,9 +108,11 @@ crates/
   noise-detect/  纯状态机：底噪、门限、冲击检测、门控、离线提取、replay 示例
   noise-store/   磁盘层（骨架）：录音分段、索引、会话、导出
   noise-audio/   音频引擎：设备、流、无锁环、pre-roll 历史、回放、状态
+  noise-node/    树莓派无头最小节点：检测 → 事件 WAV → 延迟原样回放
 src-tauri/       Tauri 2 桌面壳与构建配置
 src/             React + TypeScript 前端
-docs/            声学推导、检测器调参、实机测试清单
+deploy/          树莓派 systemd 单元
+docs/            声学推导、检测器调参、实机测试、树莓派部署
 ```
 
 ## 项目文档
@@ -105,6 +121,7 @@ docs/            声学推导、检测器调参、实机测试清单
 | --- | --- |
 | [docs/build.md](docs/build.md) | 安装工具链、平台依赖、编译、打包、测试与故障排查 |
 | [docs/usage.md](docs/usage.md) | 当前可用功能、replay 工具用法、录音准备、校准、实机前设置 |
+| [docs/raspberry-pi-minimal.md](docs/raspberry-pi-minimal.md) | 树莓派最小节点：麦克风/喇叭选型、Pi 编译、systemd、调参 |
 | [docs/detector-tuning.md](docs/detector-tuning.md) | 检测判据的推导与被实测推翻的假设，旋钮清单与调参回路 |
 | [docs/acoustics-notes.md](docs/acoustics-notes.md) | A 计权、时间计权、校准、八度带、反馈啸叫等声学推导 |
 | [docs/manual-test.md](docs/manual-test.md) | 必须有真实麦克风、音响和房间才能验证的硬件在环清单 |
@@ -115,7 +132,8 @@ docs/            声学推导、检测器调参、实机测试清单
 - **八度带是近似，不是合规测量。** 滤波器裙边比 IEC 61260 Class 1 缓，不能用于出具合规频谱报告。
 - **实时采集要求采样率 ≥ 16 kHz。** 蓝牙耳机的 HFP 模式（8/16 kHz）会同时破坏录制和回放；`noise-audio` 会拒绝在更低采样率下启动。
 - **麦克风低频滚降是本项目的头号风险。** 50 Hz 的响应远弱于 1 kHz 时，先换传感器，再谈调参。
-- **当前不会写任何录音或证据文件。** `noise-store` 尚未实现；`tauri.conf.json` 中的 `$APPDATA/anti-noise/sessions/**` 只是为将来的播放协议预留的路径。
+- **桌面应用不会写录音或证据文件。** `noise-store` 尚未实现；`tauri.conf.json` 中的 `$APPDATA/anti-noise/sessions/**` 只是为将来的播放协议预留的路径。
+- **`noise-node` 会写事件 WAV 和 JSONL，但没有保留策略、热插拔重连或校准。** 事件多时磁盘会一直增长；USB 设备掉线后需要重启服务。
 - **桌面界面尚未接通。** 安装包可以构建，但打开后只有模板界面。
 - **安装包未签名。** Windows SmartScreen 和 macOS Gatekeeper 会拦截；正式分发需要签名与公证。
 

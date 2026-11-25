@@ -7,6 +7,7 @@ members = [
     "crates/noise-detect",
     "crates/noise-store",
     "crates/noise-audio",
+    "crates/noise-node",
 ]
 
 [workspace.package]

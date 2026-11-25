@@ -60,6 +60,19 @@ pub struct InputBuild {
     pub error_counters: std::sync::Arc<ErrorCounters>,
 }
 
+impl InputBuild {
+    /// 启动输入流。
+    ///
+    /// cpal 的流建好后是否自动开始依后端而定，显式调用一次最稳。
+    /// 错误转成字符串，避免把 cpal 的错误类型再泄漏给调用方。
+    pub fn play(&mut self) -> Result<(), String> {
+        use cpal::traits::StreamTrait;
+        self.stream
+            .play()
+            .map_err(|e| format!("启动输入流失败：{e}"))
+    }
+}
+
 /// 建输入流。
 ///
 /// `ring_capacity_samples` 是环的容量；2 秒（`sample_rate * 2`）是引擎

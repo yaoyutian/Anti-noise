@@ -2378,6 +2378,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "noise-node"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel",
+ "hound",
+ "noise-audio",
+ "noise-core",
+ "noise-detect",
+ "noise-dsp",
+ "serde_json",
+]
+
+[[package]]
 name = "noise-store"
 version = "0.1.0"
 dependencies = [

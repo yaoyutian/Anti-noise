@@ -6,8 +6,9 @@
 >
 > - ✅ `replay` 离线检测：把 WAV 喂过真实的 DSP 链和检测状态机，打印事件与汇总。
 > - ✅ Rust 测试套件：覆盖 DSP、检测器、门控、音频格式转换等约 90% 的逻辑。
+> - 🟡 `noise-node` 树莓派无头最小节点：麦克风 → 检测 → 事件 WAV → 延迟原样回放；代码已实现，**尚未实机验证**，没有 UI、保留策略和热插拔重连。
 > - ⬜ 桌面应用：能启动，但只有 Tauri 模板界面，没有接入音频引擎。
-> - ⬜ 录音落盘与证据导出：`noise-store` 仍是骨架，**不会产生任何录音或报告文件**。
+> - ⬜ 完整存储层：`noise-store` 仍是骨架；桌面应用不会产生录音或报告文件。`noise-node` 只写单事件 WAV/JSONL。
 
 ---
 
@@ -27,7 +28,18 @@ npm run tauri dev
 
 它只用来证明 Tauri 通路是活的，不反映任何真实监测状态。构建安装包、安装产物和平台注意事项见 [build.md](build.md) 第 6 节。
 
-**不要用当前版本做取证或反击。** 它既不会采集音频，也不会写磁盘。
+**不要用当前桌面版本做取证或反击。** 它既不会采集音频，也不会写磁盘。
+
+### 1.1 树莓派无头最小节点
+
+如果目标是先跑通「麦克风 → 检测 → 录音 → 延迟回放」，用 `noise-node`，不要启动 Tauri：
+
+```bash
+cargo run -p noise-node --release -- --list
+cargo run -p noise-node --release -- --input <id> --output <id> --delay-ms 3000
+```
+
+它会在 `events/` 下写事件 WAV 和 `events.jsonl`，检测到事件后延迟 3 秒把录到的声音（去掉首尾静音）从输出设备播回去。硬件选型、Pi 编译、systemd 和调参见 [raspberry-pi-minimal.md](raspberry-pi-minimal.md)。
 
 ---
 

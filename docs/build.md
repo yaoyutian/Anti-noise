@@ -216,19 +216,22 @@ npx tauri build --bundles nsis
 
 | 目的 | 命令 | 依赖 |
 | --- | --- | --- |
-| 全工作区测试 | `cargo test --workspace` | 会编译 `src-tauri`，需要 Tauri 平台依赖 |
+| 全工作区测试 | `cargo test --workspace` | 会编译 `src-tauri` 和 `noise-node`，需要 Tauri 平台依赖与 ALSA |
 | 纯算法测试（不含 Tauri） | `cargo test -p noise-core -p noise-dsp -p noise-detect -p noise-audio` | Linux 需要 ALSA 开发包；不需要声卡 |
 | 最小无音频依赖子集 | `cargo test -p noise-core -p noise-dsp -p noise-detect` | 无 |
 | 检测场景套件 | `cargo test -p noise-detect --test trigger_scenarios` | 无 |
 | DSP 稳定性测试 | `cargo test -p noise-dsp --test stability` | 无 |
 | 单条回归测试 | `cargo test -p noise-dsp frame_crest_cannot_separate_rumble_from_impulse_but_rise_can -- --nocapture` | 无 |
 | 实时分配守卫 | `cargo test -p noise-audio --features rt-guard` | debug 构建才生效 |
+| 编译树莓派无头节点 | `cargo build --release -p noise-node` | Linux 需要 ALSA 开发包；不需要声卡即可编译 |
 
 说明：
 
 - 测试**不需要真实麦克风**。硬件相关项目在 [manual-test.md](manual-test.md)，必须人工执行。
 - `rt-guard` 挂载计数全局分配器，只在 `debug_assertions` 且启用 feature 时记账；`--release` 下加了也不生效，这是刻意的。
 - `replay` 示例不需要手动打开 `testgen` feature：`noise-detect::offline` 是无条件编译的，`testgen` 只供场景测试和合成信号使用。
+
+树莓派上的无头节点（`noise-node`）另有硬件选型、交叉编译和 systemd 说明，见 [raspberry-pi-minimal.md](raspberry-pi-minimal.md)。
 - 提交前建议：
 
 ```bash
@@ -274,7 +277,7 @@ cargo run -p noise-detect --example replay -- --help
 - `rustc` 为 1.94.0；
 - Node 满足 `^20.19.0 || >=22.12.0`；
 - `tauri info` 列出各平台依赖且没有缺失项；
-- `cargo metadata` 的 `workspace_members` 恰好 **6** 个成员：`src-tauri` 加 5 个 `crates/*`。`src-tauri/Cargo.toml` 顶部注释特别提醒过：`create-tauri-app` 的某些版本会写入嵌套 workspace，静默吞掉根 crate 图，导致 `cargo test --workspace` 什么都不测；
+- `cargo metadata` 的 `workspace_members` 恰好 **7** 个成员：`src-tauri` 加 6 个 `crates/*`。`src-tauri/Cargo.toml` 顶部注释特别提醒过：`create-tauri-app` 的某些版本会写入嵌套 workspace，静默吞掉根 crate 图，导致 `cargo test --workspace` 什么都不测；
 - `replay --help` 打印用法（它输出到 stderr，退出码 0）。
 
 ---
